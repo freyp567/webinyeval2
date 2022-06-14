@@ -28,4 +28,4 @@ cypress.json
 !.yarn/sdks
 !.yarn/versions
 .pnp.*
-# own
+# others
