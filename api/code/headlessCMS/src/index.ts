@@ -17,6 +17,8 @@ import logsPlugins from "@webiny/handler-logs";
 // Imports plugins created via scaffolding utilities.
 import scaffoldsPlugins from "./plugins/scaffolds";
 
+import mybooksdbGroupAndModels from "./plugins/mybooksdb";
+
 const debug = process.env.DEBUG === "true";
 
 const documentClient = new DocumentClient({
@@ -42,7 +44,8 @@ export const handler = createHandler({
             })
         }),
         createContentHeadlessCmsGraphQL({ debug }),
-        scaffoldsPlugins()
+        scaffoldsPlugins(),
+        mybooksdbGroupAndModels
     ],
     http: { debug }
 });
