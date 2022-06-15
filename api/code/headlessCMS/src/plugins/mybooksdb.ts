@@ -55,8 +55,11 @@ export default [
       {
         id: "dateRead",
         fieldId: "dateRead",
-        type: "date",
+        type: "datetime",
         label: "date read",
+        settings: {
+          "type": "date"
+        },
         renderer: { name: "text-input" }
       }
     ],
