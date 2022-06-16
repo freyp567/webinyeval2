@@ -66,6 +66,58 @@ export default [
     layout: [["bookTitle"], ["dateRead"]],
     titleFieldId: "bookTitle"
   }),
+
+  // "Author" content model.
+  new CmsModelPlugin({
+    name: "AuthorInfo",
+    description: "Author info",
+    modelId: "authorInfo",
+    group: {
+      id: "mybooksdb",
+      name: "MyBooksDB"
+    },
+    fields: [
+      {
+        id: "authorId",
+        fieldId: "authorId",
+        type: "text",
+        label: "Author Id",
+        helpText: "unique id of author info",
+        renderer: { name: "text-input" },
+        validation: [
+          {
+            name: "required",
+            message: "id is required."
+          },
+        ],
+      },
+      {
+        id: "authorName",
+        fieldId: "authorName",
+        type: "text",
+        label: "Name of Author",
+        placeholderText: "author name",
+        renderer: { name: "text-input" },
+        validation: [
+          {
+            name: "required",
+            message: "author name is required."
+          },
+        ]
+      },
+      {
+        id: "authorCV",
+        fieldId: "authorCV",
+        type: "text",
+        label: "short CV of Author",
+        placeholderText: "author CV",
+        renderer: { name: "text-input" },
+      },
+    ],
+    layout: [["authorId"], ["authorName"]],
+    titleFieldId: "authorName"
+  }),
+
 ]
 
 
