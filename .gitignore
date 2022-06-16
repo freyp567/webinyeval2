@@ -28,4 +28,6 @@ cypress.json
 !.yarn/sdks
 !.yarn/versions
 .pnp.*
+
 # others
+data/
