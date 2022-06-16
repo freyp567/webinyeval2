@@ -17,8 +17,8 @@ API_KEY = "a3b3604d9599f4da0a0e7abe2fbcbc8d9ae2e4badaa8411a"
 
 """
 
-def addBookItem(bookItem):
-    url = MANAGE_URL
+
+def getHeaders():
     headers = {
         "Accept-Encoding": "gzip, deflate, br",
         "Content-Type": "application/json",
@@ -28,47 +28,71 @@ def addBookItem(bookItem):
         #User-Agent': 'add_bookitem',
         "Origin": API_URL
     }
+    return headers
 
-    if 0:
-        dateReadVal = bookItem['dateRead'] and f'''"{bookItem['dateRead']}"''' or 'null'
-        badmutation = f"""mutation {{
-            createBookItem(
-                bookId: "{bookItem['bookId']}", 
-                bookTitle: "{bookItem['bookTitle']}",
-                dateRead: {dateReadVal}
-            ) 
-            {{
-                bookId
-            }}
-        }}"""
-        # Field "createBookitem" argument "data" of type "BookitemInput!" is required, but it was not provided.
+
+def addBookItem(bookItem):
+    url = MANAGE_URL
 
     mutation = """mutation CreateBookItem($data:BookitemInput!){
         createBookitem(data:$data)
         {
-            data { bookId }
+            data { id meta { status }}
             error { code message data }
         }
     }"""
     vars = {'data': bookItem}
 
-    request = requests.post(url, json={'query': mutation, 'variables': vars}, headers=headers)
+    request = requests.post(url, json={'query': mutation, 'variables': vars}, headers=getHeaders())
     if request.status_code == 200:
         result = request.json()
         errors = result.get('errors')
         if errors:
             print(f"Update failed - {errors}")
             raise ValueError(f"Update failed")
+
         return result
     else:
         raise Exception("Query failed to run by returning code of {}. {}".format(request.status_code, query))
 
 
+def publishBookItem(id):
+    url = MANAGE_URL
+    query = """
+mutation {
+  publishBookitem(revision: "%s") {
+    data { id entryId }
+    error {code message data}
+  }
+}    
+    """ % (id)
+    request = requests.post(url, json={'query': query}, headers=getHeaders())
+    if request.status_code == 200:
+        result = request.json()
+        errors = result.get('errors')
+        if errors:
+            print(f"Publish failed - {errors}")
+            raise ValueError(f"Publish failed")
+
+        return result
+    else:
+        raise Exception("Publish failed with status_code={}. {}".format(request.status_code, query))
+
+
 def main():
     now = datetime.datetime.now()
-    addBookItem({
+    result = addBookItem({
         "bookId": str(uuid.uuid4()),
         "bookTitle": "Test " + now.isoformat(sep='T'),
         "dateRead": None
     })
+
+    itemStatus = result['data']['createBookitem']['data']['meta']['status']
+    id = result['data']['createBookitem']['data']['id']
+    if itemStatus == 'draft':
+        publishBookItem(id)
+    else:
+        print(f"item {id} status is {itemStatus}")
+    return
+
 main()
