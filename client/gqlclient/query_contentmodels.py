@@ -3,9 +3,9 @@
 import json
 import requests 
 
-API_URL = "https://dzl9t7sk9bsqh.cloudfront.net"
+API_URL = os.environ.get("API_URL")
 READ_URL = API_URL + "/cms/read/de-DE"
-API_KEY = "a3b3604d9599f4da0a0e7abe2fbcbc8d9ae2e4badaa8411a"
+API_KEY = os.environ.get("API_KEY")
 
 
 
