@@ -7,9 +7,9 @@ import datetime
 import requests 
 import uuid
 
-API_URL = os.environ.get("API_URL")
+API_URL = os.environ["API_URL"]
 MANAGE_URL = API_URL + "/cms/manage/de-DE"
-API_KEY = os.environ.get("API_KEY")
+API_KEY = os.environ["API_KEY"]
 
 
 """

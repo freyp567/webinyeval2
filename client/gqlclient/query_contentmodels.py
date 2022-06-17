@@ -1,11 +1,12 @@
 # graphql query to list content models
 
+import os
 import json
 import requests 
 
-API_URL = os.environ.get("API_URL")
+API_URL = os.environ["API_URL"]
 READ_URL = API_URL + "/cms/read/de-DE"
-API_KEY = os.environ.get("API_KEY")
+API_KEY = os.environ["API_KEY"]
 
 
 
@@ -24,10 +25,11 @@ def main():
     query = {
         "query": "{listContentModels {data {name  modelId} }}"
     }
+    #TODO cleanup (or split)
     query2 = {
         "query": "{listBookitems {data {bookId bookTitle}}}"
     }
-    #  error {code message}
+    #  error {code message} ?
 
     session = requests.Session()
     # need to enforce TLSv1.2 ? have TLSv1.3
