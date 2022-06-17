@@ -101,8 +101,12 @@ export default [
         validation: [
           {
             name: "required",
-            message: "author name is required."
+            message: "Author name is required."
           },
+          {
+            name: "unique",
+            message: "Author name must be unique."
+          }
         ]
       },
       {
