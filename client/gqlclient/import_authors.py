@@ -5,6 +5,7 @@ from csv format defined / used by BookCatalogue
 
 import os
 from datetime import datetime
+from urllib import response
 import requests
 import csv
 import uuid
@@ -20,7 +21,7 @@ LOG = None
 API_URL = os.environ["API_URL"]
 MANAGE_URL = API_URL + "/cms/manage/de-DE"
 READ_URL = API_URL + "/cms/read/de-DE"
-PREVIEW_URL = API_URL + "/cms/preview/de-DE"
+PREVIEW_URL = API_URL + "/cms/preview/de-DE/"
 API_KEY = os.environ["API_KEY"]
 
 
@@ -52,6 +53,8 @@ def getHeaders():
 
 
 def import_authors_from_csv(csv_path, args):
+    start = datetime.now()
+    reused = created = 0
     with csv_path.open(mode='r') as csv_f:
         reader = csv.DictReader(csv_f, dialect="excel", delimiter=",")
         for row in reader:
@@ -63,24 +66,42 @@ def import_authors_from_csv(csv_path, args):
                 #FIXTHIS - but for time beeing and simplicity assume author names are unique
                 author_info = lookup_author(author_name)
                 if not author_info:
-                    # new so add author info
+                    # new, so do add author info
                     author_info = add_author(author_name)
-                    LOG.info(f"created authorInfo for {author_name}")
+                    if author_info:
+                        LOG.info(f"created authorInfo for {author_name} => id={author_info.get('id')}")
+                        created += 1
+                    else:
+                        LOG.warning(f"check authorInfo for {author_name}")
+                else:
+                    reused += 1
+    duration = datetime.now() - start
+    success_msg = f"import done, created authorinfo created={created} reused={reused} in {duration}"
+    print(success_msg)
+    LOG.info(success_msg)
     return
 
 
 def lookup_author(author_name):
     url = PREVIEW_URL
     query = """\
-{ getAuthorInfo(where:{authorName:"%s"}) { data { authorId } }}""" % (author_name,)
-    response = requests.post(url = url, json=query, headers = getHeaders())
+{ getAuthorInfo(where:{authorName:"%s"}) {
+     data { authorId } 
+     error { code message data }
+     }
+}
+""" % (author_name,)
+    response = requests.post(url = url, json={"query": query}, headers = getHeaders())
     if response.status_code != 200:
         LOG.error(f"failed to lookup author {author_name}")
         return None
     data = response.json()
-    if data.get('errors'):
-        assert not data['errors'][0]
-    print(query, '\n=>\n', data)
+    errors = data.get('errors')
+    if errors and errors[0]:
+        assert not errors
+    if 'data' in data:
+        authorInfo = data['data']['getAuthorInfo']['data']
+        return authorInfo
     return None
 
 
@@ -111,9 +132,15 @@ mutation CreateAuthorInfo($data:AuthorInfoInput!){
         LOG.error(f"failed to create authorinfo - {data['errors']}")
         raise ValueError("failed to create authorinfo")
     info = data['data']['createAuthorInfo']['data']
+    if not info or 'id' not in info:
+        # webiny / graphql reply returns no id if author info does already exist
+        # gracefully handle this
+        LOG.info(f"author not found: {author_name!r}")
+        return None
     author_info['id'] = info['id']
     author_info['ehtryId'] = info['entryId']
     pub_info = publishAuthorInfo(info['id'])
+    assert pub_info['entryId'] == info['entryId']
     return author_info
 
 
@@ -127,9 +154,9 @@ mutation {
   }
 }    
     """ % (id)
-    request = requests.post(url, json={'query': query}, headers=getHeaders())
-    if request.status_code == 200:
-        result = request.json()
+    response = requests.post(url, json={'query': query}, headers=getHeaders())
+    if response.status_code == 200:
+        result = response.json()
         errors = result.get('errors')
         if errors and errors[0]:
             for error_info in errors:
@@ -138,7 +165,7 @@ mutation {
         info = result['data']['publishAuthorInfo']['data']
         return info
     else:
-        raise Exception("Publish failed with status_code={}. {}".format(request.status_code, query))
+        raise Exception("Publish failed with status_code={}. {}".format(response.status_code, query))
 
 
 
